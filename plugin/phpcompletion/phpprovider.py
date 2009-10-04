@@ -85,6 +85,7 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
             ch = start.get_char()
             
             if not (ch.isalnum() or ch == '_' or ch == ':'):
+                start.forward_char()
                 break
         
         if start.equal(piter):
