@@ -1,0 +1,10 @@
+[Gedit Plugin]
+Loader=python
+Module=phpcompletion
+IAge=2
+Name=PHP Completion
+Description=PHP completion using the completion framework
+Icon=gedit-plugin
+Authors=Jesse van den Kieboom <jesse@gnome.org>\nIgnacio Casal Quinteiro <nacho.resa@gmail.com>
+Copyright=Copyright © 2009 Jesse van den Kieboom\nCopyright © 2009 Ignacio Casal Quinteiro
+Website=http://www.gedit.org
