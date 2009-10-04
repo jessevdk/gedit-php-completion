@@ -72,7 +72,7 @@ class PHPDb:
             extra = ''
 
         try:
-            query = "SELECT `id`, `name`, `description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s" % (extra,)
+            query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s" % (extra,)
             result = self.db.execute(query, (func,))
         except Exception as e:
             sys.stderr.write("PHPCompletion: Error in query: %s\n" % (str(e), ))

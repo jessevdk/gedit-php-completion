@@ -51,7 +51,12 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         proposals = []
         
         for func in self.db.complete_function(word):
-            proposals.append(PHPProposalFunction(self.db, func[0], func[1], func[2]))
+            if func[3]:
+                doc = func[3]
+            else:
+                doc = func[2]
+
+            proposals.append(PHPProposalFunction(self.db, func[0], func[1], doc))
         
         return proposals
     
