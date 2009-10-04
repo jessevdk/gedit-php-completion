@@ -113,6 +113,7 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         
         if not word:
             context.add_proposals(self, [], True)
+            return
         
         proposals = self.get_proposals(word)
         self.move_mark(context.get_iter().get_buffer(), start)
