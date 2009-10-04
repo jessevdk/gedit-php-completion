@@ -176,6 +176,54 @@
 			return $this->node_text_normalize($text);
 		}
 		
+		function extract_argument_info()
+		{
+			if (!$this->dom)
+			{
+				return array();
+			}
+
+			$xpath = new DOMXPath($this->dom);
+			$names = $xpath->query('//div[@class="methodsynopsis dc-description"]');
+			
+			if ($names->length == 0)
+			{
+				return array();
+			}
+			
+			$content = $this->dom->saveXML($names->item(0));
+			$arguments = array();
+			
+			if (preg_match_all('/<span class="methodparam"><span class="type">(.*?)<\/span>\s*<tt class="parameter">(.*?)<\/tt><\/span>/', $content, $matches, PREG_SET_ORDER))
+			{
+				foreach ($matches as $match)
+				{
+					if (preg_match('/<a.*?>(.*?)<\/a>/', $match[1], $types))
+					{
+						$type = $types[1];
+					}
+					else
+					{
+						$type = $match[1];
+					}
+					
+					$name = $match[2][0] == '$' ? substr($match[2], 1) : $match[2];
+					$arguments[] = array('type' => $type, 'name' => $name);
+				}
+			}
+			
+			// Little hack to get which arguments are optional
+			$content = preg_replace('/[^,[\]]/', '', $content);
+			$parts = explode(',', $content);
+			
+			for ($i = 0; $i < count($parts); $i++)
+			{
+				 $arguments[$i]['optional'] = !($parts[$i] == '');
+			}
+			
+			return $arguments;
+		}
+		
 		function parse_function()
 		{
 			$this->doc = array(
@@ -215,8 +263,28 @@
 				$this->parse_class();
 			}
 		}
-	};
-	
+
+		function make_args_from_params($params)
+		{
+			$ret = array();
+		
+			for ($i = 0; $i < count($params); $i++)
+			{
+				$param = $params[$i];
+			
+				$p = array(
+					'name' => $param->getName(),
+					'type' => '',
+					'optional' => $param->isOptional()
+				);
+			
+				$ret[$param->getPosition()] = $p;
+			}
+		
+			return $ret;
+		}
+	}
+
 	function insert_function($db, $ref, $classid)
 	{
 		$extractor = new DocumentationExtractor($ref);
@@ -259,21 +327,29 @@
 		$db->insert('functions', $params);
 		$id = intval($db->last_insert_id());
 		
-		foreach ($ref->getParameters() as $parameter)
+		$args = $extractor->extract_argument_info();
+		$params = $ref->getParameters();
+		
+		if (count($params) > count($args))
+		{
+			$args = $extractor->make_args_from_params($params);
+		}
+		
+		for ($i = 0; $i < count($args); $i++)
 		{
 			$description = '';
 			
-			if ($parameter->getPosition() < count($arguments_doc))
+			if ($i < count($arguments_doc))
 			{
-				$description = $arguments_doc[$parameter->getPosition()]['description'];
+				$description = $arguments_doc[$i]['description'];
 			}
 			
 			$db->insert('arguments', array(
 				'function' => $id,
-				'index' => $parameter->getPosition(),
-				'name' => $parameter->getName(),
-				'optional' => $parameter->isOptional() ? 1 : 0,
-				'default' => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : '',
+				'index' => $i,
+				'name' => $args[$i]['name'],
+				'optional' => $args[$i]['optional'] ? 1 : 0,
+				'type' => $args[$i]['type'],
 				'description' => $description
 			));
 		}
@@ -363,7 +439,7 @@
 	$db->query("CREATE INDEX `function_class` ON `functions` (`class`)");
 	$db->query("CREATE INDEX `function_flags` ON `functions` (`flags`)");
 	
-	$db->query("CREATE TABLE `arguments` (`function` INTEGER, `index` INTEGER, `name` STRING, `optional` INTEGER, `default` STRING, `description` STRING)");
+	$db->query("CREATE TABLE `arguments` (`function` INTEGER, `index` INTEGER, `name` STRING, `optional` INTEGER, `type` STRING, `default` STRING, `description` STRING)");
 	$db->query("CREATE INDEX `argument_function` ON `arguments` (`function`)");
 	$db->query("CREATE INDEX `argument_index` ON `arguments` (`index`)");
 	
