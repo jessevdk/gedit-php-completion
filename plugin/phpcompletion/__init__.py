@@ -24,7 +24,8 @@ import gtk
 import gedit
 from gettext import gettext as _
 import gtksourceview2 as gsv
-from phpprovider import PHPProvider
+from phpprovider import PHPProvider, PHP_PROVIDER_DATA_KEY
+import utils
 import os
 
 class PHPCompletionWindowHelper:
@@ -54,6 +55,7 @@ class PHPCompletionWindowHelper:
     
     def add_view(self, view):
        view.get_completion().add_provider(self._provider)
+       view.get_completion().connect('populate-context', self.on_populate_context)
 
     def remove_view(self, view):
         view.get_completion().remove_provider(self._provider)
@@ -65,6 +67,29 @@ class PHPCompletionWindowHelper:
     def on_tab_removed(self, window, tab):
         # Remove provider from the view
         self.remove_view(tab.get_view())
+
+    def check_is_class(self, context):
+        piter = context.get_iter()
+        
+        start = piter.copy()
+        start.backward_char()
+        ch = start.get_char()
+        
+        #Move to the start of the word
+        while ch.isalnum() or ch == '_' or ch == ':' and not start.starts_line():
+            start.backward_char()
+            ch = start.get_char()
+
+        #Now we check that the previous word is 'new'
+        start2, word = utils.get_word(start)
+        if word == 'new':
+            return True
+        else:
+            return False
+
+    def on_populate_context(self, completion, context):
+        is_class = self.check_is_class(context)
+        context.set_data(PHP_PROVIDER_DATA_KEY, is_class)
 
 class PHPCompletionPlugin(gedit.Plugin):
     WINDOW_DATA_KEY = "PHPCompletionPluginWindowData"

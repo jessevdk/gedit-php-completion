@@ -23,7 +23,7 @@
 import gtksourceview2 as gsv
 import gobject
 
-class PHPProposalFunction(gobject.GObject, gsv.CompletionProposal):
+class PHPProposal(gobject.GObject, gsv.CompletionProposal):
     def __init__(self, db, fid, name, description):
         gobject.GObject.__init__(self)
 
@@ -41,6 +41,6 @@ class PHPProposalFunction(gobject.GObject, gsv.CompletionProposal):
     def do_get_info(self):
         return "%s (%s)\n\n%s" % (self.name, self.db.function_info(self.fid), self.description)
 
-gobject.type_register(PHPProposalFunction)
+gobject.type_register(PHPProposal)
 
 # ex:ts=4:et:

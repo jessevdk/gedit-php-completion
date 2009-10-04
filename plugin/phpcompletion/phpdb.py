@@ -62,7 +62,7 @@ class PHPDb:
 
         return ret
 
-    def complete_function(self, func, maxresults = -1):
+    def complete(self, name, query, maxresults):
         if not self.db:
             return []
 
@@ -72,12 +72,28 @@ class PHPDb:
             extra = ''
 
         try:
-            query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s" % (extra,)
-            result = self.db.execute(query, (func,))
+            query = query % (extra,)
+            if not name:
+                result = self.db.execute(query)
+            else:
+                result = self.db.execute(query, (name,))
         except Exception as e:
             sys.stderr.write("PHPCompletion: Error in query: %s\n" % (str(e), ))
             return []
         
         return list(result)
+    
+    def complete_function(self, func, maxresults = -1):
+        query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
+        
+        return self.complete(func, query, maxresults)
+        
+    def complete_class(self, class_name, maxresults = -1):
+        if not class_name:
+            query = "SELECT `id`, `name`, `doc` FROM classes %s"
+        else:
+            query = "SELECT `id`, `name`, `doc` FROM classes WHERE `name` LIKE ? || '%%' ORDER BY `name` %s"
+        
+        return self.complete(class_name, query, maxresults)
 
 # ex:ts=4:et:

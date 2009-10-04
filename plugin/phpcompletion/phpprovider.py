@@ -26,7 +26,10 @@ from gettext import gettext as _
 import gtksourceview2 as gsv
 from phpdb import PHPDb
 import gobject
-from phpproposals import PHPProposalFunction
+from phpproposals import PHPProposal
+import utils
+
+PHP_PROVIDER_DATA_KEY = 'PHPProviderData'
 
 class PHPProvider(gobject.GObject, gsv.CompletionProvider):
     MARK_NAME = 'PHPProviderCompletionMark'
@@ -46,17 +49,21 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         else:
             buf.move_mark(mark, start)
     
-    def get_proposals(self, word):
-        # Just get functions for now
+    def get_proposals(self, is_class, word):
+        # Just get functions and classes for now
         proposals = []
         
-        for func in self.db.complete_function(word):
-            if func[3]:
-                doc = func[3]
-            else:
-                doc = func[2]
+        if is_class:
+            for class_name in self.db.complete_class(word):
+                proposals.append(PHPProposal(self.db, class_name[0], class_name[1], class_name[2]))
+        else:
+            for func in self.db.complete_function(word):
+                if func[3]:
+                    doc = func[3]
+                else:
+                    doc = func[2]
 
-            proposals.append(PHPProposalFunction(self.db, func[0], func[1], doc))
+                proposals.append(PHPProposal(self.db, func[0], func[1], doc))
         
         return proposals
     
@@ -69,36 +76,6 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         
         return buf.get_iter_at_mark(mark)
     
-    def get_word(self, context):
-        piter = context.get_iter()
-        
-        if not piter.ends_word or piter.get_char() == '_':
-            return None, None
-        
-        start = piter.copy()
-        
-        while True:
-            if start.starts_line():
-                break
-            
-            start.backward_char()
-            ch = start.get_char()
-            
-            if not (ch.isalnum() or ch == '_' or ch == ':'):
-                start.forward_char()
-                break
-        
-        if start.equal(piter):
-            return None, None
-        
-        while (not start.equal(piter)) and start.get_char().isdigit():
-            start.forward_char()
-
-        if start.equal(piter):
-            return None, None
-
-        return start, start.get_text(piter)
-    
     def do_match(self, context):
         lang = context.get_iter().get_buffer().get_language()
         
@@ -108,17 +85,22 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         if lang.get_id() != 'php' and lang.get_id() != 'html':
             return False
 
-        start, word = self.get_word(context)
-        return word and len(word) > 2
+        start, word = utils.get_word(context.get_iter())
+        is_class = context.get_data(PHP_PROVIDER_DATA_KEY)
+        return is_class or (word and len(word) > 2)
 
     def do_populate(self, context):
-        start, word = self.get_word(context)
+        is_class = context.get_data(PHP_PROVIDER_DATA_KEY)
+        start, word = utils.get_word(context.get_iter())
+        if not is_class:
+            if not word:
+                context.add_proposals(self, [], True)
+                return
+        else:
+            if not word:
+                start = context.get_iter()
         
-        if not word:
-            context.add_proposals(self, [], True)
-            return
-        
-        proposals = self.get_proposals(word)
+        proposals = self.get_proposals(is_class, word)
         self.move_mark(context.get_iter().get_buffer(), start)
         
         context.add_proposals(self, proposals, True)
