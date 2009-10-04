@@ -39,7 +39,7 @@ class PHPDb:
             return ''
 
         try:
-            result = self.db.execute('SELECT `name`, `optional` FROM arguments WHERE `function` = ? ORDER BY `index`', (fid,))
+            result = self.db.execute('SELECT `name`, `optional`, `type` FROM arguments WHERE `function` = ? ORDER BY `index`', (fid,))
         except Exception as e:
             sys.stderr.write("PHPCompletion: Error in query: %s\n" % (str(e), ))
             return ''
@@ -47,17 +47,18 @@ class PHPDb:
         ret = ''
 
         for arg in result:
+            name = ('%s %s' % (arg[2], arg[0])).strip()
             if ret != '':
                 if arg[1]:
-                    ret += ' <i>[, %s]</i>' % (arg[0],)
+                    ret += ' <i>[, %s]</i>' % (name,)
                     continue
                 else:
                     ret += ', '
 
             if arg[1]:
-                ret += '<i>[, %s]</i>' % (arg[0],)
+                ret += '<i>[, %s]</i>' % (name,)
             else:
-                ret += arg[0]
+                ret += name
 
         return ret
 
