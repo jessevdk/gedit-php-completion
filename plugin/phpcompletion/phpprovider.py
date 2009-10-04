@@ -39,12 +39,12 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
     
     def move_mark(self, buf, start):
         # TODO: see do_get_mark_iter
-        self.mark = buf.get_mark(self.MARK_NAME)
+        mark = buf.get_mark(self.MARK_NAME)
         
-        if not self.mark:
-            self.mark = buf.create_mark(self.MARK_NAME, start, True)
+        if not mark:
+            buf.create_mark(self.MARK_NAME, start, True)
         else:
-            buf.move_mark(self.mark, start)
+            buf.move_mark(mark, start)
     
     def get_proposals(self, word):
         # Just get functions for now
@@ -60,17 +60,14 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         
         return proposals
     
-    def do_get_start_iter(self, proposal):
-        # In C, we get the iter and could get the buffer from it, and then
-        # the mark we created. In python this is currently not the case, so
-        # there is no way to get to the buffer, hence we use the mark as
-        # stored in 'move_mark'. This means that right now, there can not be
-        # two completions at the same time (which is not _really_ possible
-        # anyway)
-        if not self.mark:
+    def do_get_start_iter(self, context, proposal):
+        buf = context.get_iter().get_buffer()
+        mark = buf.get_mark(self.MARK_NAME)
+
+        if not mark:
             return None
         
-        return self.mark.get_buffer().get_iter_at_mark(self.mark)
+        return buf.get_iter_at_mark(mark)
     
     def get_word(self, context):
         piter = context.get_iter()
