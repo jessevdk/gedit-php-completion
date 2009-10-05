@@ -24,7 +24,7 @@ import gtk
 import gedit
 from gettext import gettext as _
 import gtksourceview2 as gsv
-from phpprovider import PHPProvider, PHP_PROVIDER_DATA_KEY
+from phpprovider import PHPProvider, PHP_PROVIDER_IS_CLASS_DATA_KEY, PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY
 import utils
 import os
 
@@ -92,9 +92,23 @@ class PHPCompletionWindowHelper:
         else:
             return False
 
+    def check_is_class_const(self, context):
+        start, word = utils.get_word(context.get_iter())
+        
+        if word:
+            split = word.split('::')
+            if len(split) == 2:
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def on_populate_context(self, completion, context):
         is_class = self.check_is_class(context)
-        context.set_data(PHP_PROVIDER_DATA_KEY, is_class)
+        is_class_const = self.check_is_class_const(context)
+        context.set_data(PHP_PROVIDER_IS_CLASS_DATA_KEY, is_class)
+        context.set_data(PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY, is_class_const)
 
 class PHPCompletionPlugin(gedit.Plugin):
     WINDOW_DATA_KEY = "PHPCompletionPluginWindowData"

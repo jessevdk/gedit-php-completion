@@ -62,7 +62,7 @@ class PHPDb:
 
         return ret
 
-    def complete(self, name, query, maxresults):
+    def complete(self, query, maxresults, arg1, arg2 = None):
         if not self.db:
             return []
 
@@ -73,10 +73,13 @@ class PHPDb:
 
         try:
             query = query % (extra,)
-            if not name:
+            if not arg1:
                 result = self.db.execute(query)
             else:
-                result = self.db.execute(query, (name,))
+                if not arg2:
+                    result = self.db.execute(query, (arg1,))
+                else:
+                    result = self.db.execute(query, (arg1, arg2))
         except Exception as e:
             sys.stderr.write("PHPCompletion: Error in query: %s\n" % (str(e), ))
             return []
@@ -85,10 +88,10 @@ class PHPDb:
     
     def complete_function(self, func, maxresults = -1):
         query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
-        functions = self.complete(func, query, maxresults)
+        functions = self.complete(query, maxresults, func)
         
         query2 = "SELECT `id`, `name` FROM constants WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
-        constants = self.complete(func, query2, maxresults)
+        constants = self.complete(query2, maxresults, func)
         
         return functions + constants
         
@@ -98,6 +101,21 @@ class PHPDb:
         else:
             query = "SELECT `id`, `name`, `doc` FROM classes WHERE `name` LIKE ? || '%%' ORDER BY `name` %s"
         
-        return self.complete(class_name, query, maxresults)
+        return self.complete(query, maxresults, class_name)
+
+    def complete_class_const(self, class_name, const, maxresults = -1):
+        class_query = "SELECT `id` FROM classes where `name` = ? %s"
+        class_id = self.complete(class_query, 1, class_name)
+        
+        result = []
+        if class_id:
+            if not const:
+                query = "SELECT `id`, `name` FROM constants WHERE `class` = ? %s"
+                result = self.complete(query, maxresults, class_id[0][0])
+            else:
+                query = "SELECT `id`, `name` FROM constants WHERE `class` = ? AND `name` LIKE ? || '%%' ORDER BY `name` %s"
+                result = self.complete(query, maxresults, class_id[0][0], const)
+        
+        return result
 
 # ex:ts=4:et:

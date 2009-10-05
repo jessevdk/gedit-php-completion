@@ -29,7 +29,8 @@ import gobject
 from phpproposals import PHPProposal
 import utils
 
-PHP_PROVIDER_DATA_KEY = 'PHPProviderData'
+PHP_PROVIDER_IS_CLASS_DATA_KEY = 'PHPProviderIsClassData'
+PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY = 'PHPProviderIsClassConstantData'
 
 class PHPProvider(gobject.GObject, gsv.CompletionProvider):
     MARK_NAME = 'PHPProviderCompletionMark'
@@ -49,11 +50,15 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         else:
             buf.move_mark(mark, start)
     
-    def get_proposals(self, is_class, word):
+    def get_proposals(self, is_class, is_class_const, word):
         # Just get functions and classes for now
         proposals = []
         
-        if is_class:
+        if is_class_const:
+            const = word.split('::')
+            for class_const in self.db.complete_class_const(const[0], const[1]):
+                proposals.append(PHPProposal(self.db, class_const[0], class_const[1], ''))
+        elif is_class:
             for class_name in self.db.complete_class(word):
                 proposals.append(PHPProposal(self.db, class_name[0], class_name[1], class_name[2]))
         else:
@@ -89,21 +94,25 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
             return False
 
         start, word = utils.get_word(context.get_iter())
-        is_class = context.get_data(PHP_PROVIDER_DATA_KEY)
+        is_class = context.get_data(PHP_PROVIDER_IS_CLASS_DATA_KEY)
         return is_class or (word and len(word) > 2)
 
     def do_populate(self, context):
-        is_class = context.get_data(PHP_PROVIDER_DATA_KEY)
+        is_class = context.get_data(PHP_PROVIDER_IS_CLASS_DATA_KEY)
+        is_class_const = context.get_data(PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY)
         start, word = utils.get_word(context.get_iter())
         if not is_class:
             if not word:
                 context.add_proposals(self, [], True)
                 return
+            elif is_class_const:
+                # FIXME: This should be implemented in activation
+                start = context.get_iter()
         else:
             if not word:
                 start = context.get_iter()
         
-        proposals = self.get_proposals(is_class, word)
+        proposals = self.get_proposals(is_class, is_class_const, word)
         self.move_mark(context.get_iter().get_buffer(), start)
         
         context.add_proposals(self, proposals, True)
