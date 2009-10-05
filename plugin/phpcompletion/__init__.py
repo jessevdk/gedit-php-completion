@@ -39,13 +39,16 @@ class PHPCompletionWindowHelper:
         for view in self._window.get_views():
             self.add_view(view)
 
-        self._window.connect('tab-added', self.on_tab_added)
-        self._window.connect('tab-removed', self.on_tab_removed)
+        self._tab_added_id = self._window.connect('tab-added', self.on_tab_added)
+        self._tab_removed_id = self._window.connect('tab-removed', self.on_tab_removed)
 
     def deactivate(self):
         # Remove the provider from all the views
         for view in self._window.get_views():
-            view.remove_provider(self._provider)
+            view.get_completion().completion.remove_provider(self._provider)
+
+        self._window.disconnect(self._tab_added_id)
+        self._window.disconnect(self._tab_removed_id)
 
         self._window = None
         self._plugin = None
