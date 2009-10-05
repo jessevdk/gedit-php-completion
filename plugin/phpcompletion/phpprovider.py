@@ -58,10 +58,13 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
                 proposals.append(PHPProposal(self.db, class_name[0], class_name[1], class_name[2]))
         else:
             for func in self.db.complete_function(word):
-                if func[3]:
-                    doc = func[3]
+                if len(func) > 2:
+                    if func[3]:
+                        doc = func[3]
+                    else:
+                        doc = func[2]
                 else:
-                    doc = func[2]
+                    doc = ''
 
                 proposals.append(PHPProposal(self.db, func[0], func[1], doc))
         

@@ -85,8 +85,12 @@ class PHPDb:
     
     def complete_function(self, func, maxresults = -1):
         query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
+        functions = self.complete(func, query, maxresults)
         
-        return self.complete(func, query, maxresults)
+        query2 = "SELECT `id`, `name` FROM constants WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
+        constants = self.complete(func, query2, maxresults)
+        
+        return functions + constants
         
     def complete_class(self, class_name, maxresults = -1):
         if not class_name:
