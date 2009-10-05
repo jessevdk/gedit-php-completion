@@ -80,7 +80,9 @@ class PHPCompletionWindowHelper:
         
         #Move to the start of the word
         while ch.isalnum() or ch == '_' or ch == ':' and not start.starts_line():
-            start.backward_char()
+            if not start.backward_char():
+                break
+
             ch = start.get_char()
 
         #Now we check that the previous word is 'new'
