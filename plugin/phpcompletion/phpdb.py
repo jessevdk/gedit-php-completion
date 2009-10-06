@@ -62,7 +62,7 @@ class PHPDb:
 
         return ret
 
-    def complete(self, query, maxresults, arg1, arg2 = None):
+    def complete(self, query, maxresults, *args):
         if not self.db:
             return []
 
@@ -73,25 +73,23 @@ class PHPDb:
 
         try:
             query = query % (extra,)
-            if not arg1 and arg1 != 0:
+            
+            if args[0] == None:
                 result = self.db.execute(query)
             else:
-                if not arg2:
-                    result = self.db.execute(query, (arg1,))
-                else:
-                    result = self.db.execute(query, (arg1, arg2))
+                result = self.db.execute(query, args)
         except Exception as e:
             sys.stderr.write("PHPCompletion: Error in query: %s\n" % (str(e), ))
             return []
         
         return list(result)
     
-    def complete_function(self, func, maxresults = -1, classid = 0):
+    def complete_function(self, func, classid = 0, maxresults = -1):
         query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = ? AND `name` LIKE ? || '%%' ORDER BY `name` %s"
         
         return self.complete(query, maxresults, classid, func)
     
-    def complete_const(self, const, maxresults = -1, classid = 0):
+    def complete_const(self, const, classid = 0, maxresults = -1,):
         query = "SELECT `id`, `name` FROM constants WHERE `class` = ? AND `name` LIKE ? || '%%' ORDER BY `name` %s"
         
         return self.complete(query, maxresults, classid, const)
@@ -111,7 +109,7 @@ class PHPDb:
         result = []
         if class_id:
             if not const:
-                query = "SELECT `id`, `name` FROM constants WHERE `class` = ? %s"
+                query = "SELECT `id`, `name` FROM constants WHERE `class` = ? ORDER BY `name` %s"
                 result = self.complete(query, maxresults, class_id[0][0])
             else:
                 query = "SELECT `id`, `name` FROM constants WHERE `class` = ? AND `name` LIKE ? || '%%' ORDER BY `name` %s"
