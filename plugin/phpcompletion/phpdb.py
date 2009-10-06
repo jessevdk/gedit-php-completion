@@ -73,7 +73,7 @@ class PHPDb:
 
         try:
             query = query % (extra,)
-            if not arg1:
+            if not arg1 and arg1 != 0:
                 result = self.db.execute(query)
             else:
                 if not arg2:
@@ -86,15 +86,15 @@ class PHPDb:
         
         return list(result)
     
-    def complete_function(self, func, maxresults = -1):
-        query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
+    def complete_function(self, func, maxresults = -1, classid = 0):
+        query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = ? AND `name` LIKE ? || '%%' ORDER BY `name` %s"
         
-        return self.complete(query, maxresults, func)
+        return self.complete(query, maxresults, classid, func)
     
-    def complete_const(self, const, maxresults = -1):
-        query = "SELECT `id`, `name` FROM constants WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
+    def complete_const(self, const, maxresults = -1, classid = 0):
+        query = "SELECT `id`, `name` FROM constants WHERE `class` = ? AND `name` LIKE ? || '%%' ORDER BY `name` %s"
         
-        return self.complete(query, maxresults, const)
+        return self.complete(query, maxresults, classid, const)
     
     def complete_class(self, class_name, maxresults = -1):
         if not class_name:
