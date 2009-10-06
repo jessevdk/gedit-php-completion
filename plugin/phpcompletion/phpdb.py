@@ -88,13 +88,14 @@ class PHPDb:
     
     def complete_function(self, func, maxresults = -1):
         query = "SELECT `id`, `name`, `description`, `short_description` FROM functions WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
-        functions = self.complete(query, maxresults, func)
         
-        query2 = "SELECT `id`, `name` FROM constants WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
-        constants = self.complete(query2, maxresults, func)
+        return self.complete(query, maxresults, func)
+    
+    def complete_const(self, const, maxresults = -1):
+        query = "SELECT `id`, `name` FROM constants WHERE `class` = 0 AND `name` LIKE ? || '%%' ORDER BY `name` %s"
         
-        return functions + constants
-        
+        return self.complete(query, maxresults, const)
+    
     def complete_class(self, class_name, maxresults = -1):
         if not class_name:
             query = "SELECT `id`, `name`, `doc` FROM classes %s"

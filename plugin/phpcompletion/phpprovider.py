@@ -72,6 +72,9 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
                     doc = ''
 
                 proposals.append(PHPProposal(self.db, func[0], func[1], doc))
+            
+            for const in self.db.complete_const(word):
+                proposals.append(PHPProposal(self.db, const[0], const[1], ''))
         
         return proposals
     
