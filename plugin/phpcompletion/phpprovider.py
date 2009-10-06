@@ -26,7 +26,7 @@ from gettext import gettext as _
 import gtksourceview2 as gsv
 from phpdb import PHPDb
 import gobject
-from phpproposals import PHPProposal
+from phpproposals import PHPProposal, PHPProposalFunction, PHPProposalClass
 import utils
 
 PHP_PROVIDER_IS_CLASS_DATA_KEY = 'PHPProviderIsClassData'
@@ -57,10 +57,10 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         if is_class_const:
             const = word.split('::')
             for class_const in self.db.complete_class_const(const[0], const[1]):
-                proposals.append(PHPProposal(self.db, class_const[0], class_const[1], ''))
+                proposals.append(PHPProposal(self.db, class_const[0], class_const[1]))
         elif is_class:
             for class_name in self.db.complete_class(word):
-                proposals.append(PHPProposal(self.db, class_name[0], class_name[1], class_name[2]))
+                proposals.append(PHPProposalClass(self.db, class_name[0], class_name[1], class_name[2]))
         else:
             for func in self.db.complete_function(word):
                 if len(func) > 2:
@@ -71,10 +71,10 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
                 else:
                     doc = ''
 
-                proposals.append(PHPProposal(self.db, func[0], func[1], doc))
+                proposals.append(PHPProposalFunction(self.db, func[0], func[1], doc))
             
             for const in self.db.complete_const(word):
-                proposals.append(PHPProposal(self.db, const[0], const[1], ''))
+                proposals.append(PHPProposal(self.db, const[0], const[1]))
         
         return proposals
     
