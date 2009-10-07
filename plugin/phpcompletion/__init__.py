@@ -24,7 +24,7 @@ import gtk
 import gedit
 from gettext import gettext as _
 import gtksourceview2 as gsv
-from phpprovider import PHPProvider, PHP_PROVIDER_IS_CLASS_DATA_KEY, PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY
+import phpprovider
 import utils
 import os
 
@@ -34,7 +34,7 @@ class PHPCompletionWindowHelper:
         self._plugin = plugin
         
         # TODO: use get_data_dir when db is nicely installed in the correct place
-        self._provider = PHPProvider(os.path.join(plugin.get_install_dir(), 'phpcompletion', 'phpsymbols.db'))
+        self._provider = phpprovider.PHPProvider(os.path.join(plugin.get_install_dir(), 'phpcompletion', 'phpsymbols.db'))
         
         for view in self._window.get_views():
             self.add_view(view)
@@ -104,11 +104,29 @@ class PHPCompletionWindowHelper:
         else:
             return False
 
+    def is_php_statement(self, context):
+        end, word = utils.get_word(context.get_iter())
+        
+        if not word == 'php' or not end:
+            return False
+
+        start = end.copy()
+        if not start.backward_chars(2):
+            return False
+        
+        w = start.get_text(end)
+        if w == '<?':
+            return True
+        else:
+            return False
+
     def on_populate_context(self, completion, context):
         is_class = self.check_is_class(context)
         is_class_const = self.check_is_class_const(context)
-        context.set_data(PHP_PROVIDER_IS_CLASS_DATA_KEY, is_class)
-        context.set_data(PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY, is_class_const)
+        is_php_statement = self.is_php_statement(context)
+        context.set_data(phpprovider.PHP_PROVIDER_IS_CLASS_DATA_KEY, is_class)
+        context.set_data(phpprovider.PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY, is_class_const)
+        context.set_data(phpprovider.PHP_PROVIDER_IS_PHP_STATEMENT_DATA_KEY, is_php_statement)
 
 class PHPCompletionPlugin(gedit.Plugin):
     WINDOW_DATA_KEY = "PHPCompletionPluginWindowData"

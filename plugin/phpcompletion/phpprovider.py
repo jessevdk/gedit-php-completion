@@ -31,6 +31,7 @@ import utils
 
 PHP_PROVIDER_IS_CLASS_DATA_KEY = 'PHPProviderIsClassData'
 PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY = 'PHPProviderIsClassConstantData'
+PHP_PROVIDER_IS_PHP_STATEMENT_DATA_KEY = 'PHPProviderIsPHPStatementData'
 
 class PHPProvider(gobject.GObject, gsv.CompletionProvider):
     MARK_NAME = 'PHPProviderCompletionMark'
@@ -50,7 +51,7 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         else:
             buf.move_mark(mark, start)
     
-    def get_proposals(self, is_class, is_class_const, word):
+    def get_proposals(self, is_class, is_class_const, is_php_statement, word):
         # Just get functions and classes for now
         proposals = []
         
@@ -61,7 +62,7 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
         elif is_class:
             for class_name in self.db.complete_class(word):
                 proposals.append(PHPProposalClass(self.db, class_name[0], class_name[1], class_name[2]))
-        else:
+        elif not is_php_statement:
             for func in self.db.complete_function(word):
                 if len(func) > 2:
                     if func[3]:
@@ -103,6 +104,8 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
     def do_populate(self, context):
         is_class = context.get_data(PHP_PROVIDER_IS_CLASS_DATA_KEY)
         is_class_const = context.get_data(PHP_PROVIDER_IS_CLASS_CONST_DATA_KEY)
+        is_php_statement = context.get_data(PHP_PROVIDER_IS_PHP_STATEMENT_DATA_KEY)
+        
         start, word = utils.get_word(context.get_iter())
         if not is_class:
             if not word:
@@ -115,7 +118,7 @@ class PHPProvider(gobject.GObject, gsv.CompletionProvider):
             if not word:
                 start = context.get_iter()
         
-        proposals = self.get_proposals(is_class, is_class_const, word)
+        proposals = self.get_proposals(is_class, is_class_const, is_php_statement, word)
         self.move_mark(context.get_iter().get_buffer(), start)
         
         context.add_proposals(self, proposals, True)
