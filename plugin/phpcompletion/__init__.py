@@ -111,14 +111,7 @@ class PHPCompletionWindowHelper:
             return False
 
         start = end.copy()
-        if not start.backward_chars(2):
-            return False
-        
-        w = start.get_text(end)
-        if w == '<?':
-            return True
-        else:
-            return False
+        return start.backward_chars(2) and start.get_text(end) == '<?'
 
     def on_populate_context(self, completion, context):
         is_class = self.check_is_class(context)
