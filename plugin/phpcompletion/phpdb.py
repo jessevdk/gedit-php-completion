@@ -24,6 +24,15 @@ import sqlite3
 import os
 import sys
 
+class Flags:
+    Constructor = 1 << 0
+    Destructor = 1 << 1
+    Abstract = 1 << 2
+    Final = 1 << 3
+    Protected = 1 << 4
+    Public = 1 << 5
+    Static = 1 << 6
+
 class PHPDb:
     def __init__(self, database):
         self.db = None
@@ -61,6 +70,15 @@ class PHPDb:
                 ret += name
 
         return ret
+
+    def class_info(self, fid):
+        query = "SELECT `id` FROM functions WHERE `class` = ? AND `flags` = ? %s"
+        func_id = self.complete(query, -1, fid, Flags.Constructor | Flags.Public)
+        
+        if func_id:
+            return self.function_info(func_id[0][0])
+        else:
+            return ''
 
     def complete(self, query, maxresults, *args):
         if not self.db:

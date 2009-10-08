@@ -57,7 +57,7 @@ class PHPProposalClass(PHPProposal):
         self.doc = doc
     
     def do_get_info(self):
-        return "%s (%s)\n\n%s" % (self.name, '', self.doc)
+        return "%s (%s)\n\n%s" % (self.name, self.db.class_info(self.fid), self.doc)
 
 gobject.type_register(PHPProposal)
 
