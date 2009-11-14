@@ -1,0 +1,10 @@
+Gedit plugin providing static PHP symbol completion. This plugin uses
+gtksourcecompletion (GtkSourceView >= 2.8) to provide automatic completion
+of static PHP symbols (functions, classes).
+
+To install, from the cloned repository:
+
+cp -r plugin/* $HOME/.gnome2/gedit/plugins/
+
+If you want to generate your own symbol database, you can use the extractor
+script in 'extractor'.
