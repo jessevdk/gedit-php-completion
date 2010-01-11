@@ -1,5 +1,5 @@
 Gedit plugin providing static PHP symbol completion. This plugin uses
-gtksourcecompletion (GtkSourceView >= 2.8) to provide automatic completion
+gtksourcecompletion (GtkSourceView >= 2.9) to provide automatic completion
 of static PHP symbols (functions, classes).
 
 To install, from the cloned repository:
